@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Condomínio Edifício Caravela · Gestão</title>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js" onload="initFirebase()"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
 <style>
@@ -1274,37 +1274,31 @@ var _db = null;
 var _fbPronto = false;
 
 function initFirebase() {
-  var tentativas = 0;
-  function tentar() {
-    tentativas++;
-    if (typeof firebase === "undefined") {
-      if (tentativas < 20) { setTimeout(tentar, 500); }
-      else { fbStatus("offline"); }
-      return;
-    }
-    if (_db) return;
-    try {
-      var cfg = {
-        apiKey: "AIzaSyDSc4hcJqudgDc_SuywoxRkr8NvhOyllYQ",
-        authDomain: "caravela-condominio.firebaseapp.com",
-        databaseURL: "https://caravela-condominio-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "caravela-condominio",
-        storageBucket: "caravela-condominio.firebasestorage.app",
-        messagingSenderId: "419198853686",
-        appId: "1:419198853686:web:710b291832d9865ffa6e97"
-      };
-      var app = firebase.apps.length
-        ? firebase.apps[0]
-        : firebase.initializeApp(cfg);
-      _db = firebase.database(app);
-      _fbPronto = true;
-      fbCarregarTudo();
-    } catch(e) {
-      console.warn("Firebase erro:", e);
-      fbStatus("offline");
-    }
+  if (_db) return;
+  if (typeof firebase === "undefined") {
+    fbStatus("offline");
+    return;
   }
-  tentar();
+  try {
+    var cfg = {
+      apiKey: "AIzaSyDSc4hcJqudgDc_SuywoxRkr8NvhOyllYQ",
+      authDomain: "caravela-condominio.firebaseapp.com",
+      databaseURL: "https://caravela-condominio-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "caravela-condominio",
+      storageBucket: "caravela-condominio.firebasestorage.app",
+      messagingSenderId: "419198853686",
+      appId: "1:419198853686:web:710b291832d9865ffa6e97"
+    };
+    var app = firebase.apps.length
+      ? firebase.apps[0]
+      : firebase.initializeApp(cfg);
+    _db = firebase.database(app);
+    _fbPronto = true;
+    fbCarregarTudo();
+  } catch(e) {
+    console.warn("Firebase erro:", e);
+    fbStatus("offline");
+  }
 }
 
 var FB = "dados";
@@ -2196,7 +2190,6 @@ function ccRegistarRec() {
   fbSync();
   ["cc-r-orc","cc-r-elev","cc-r-fcr","cc-r-obras","cc-r-obs"].forEach(function(id){ document.getElementById(id).value=""; });
   ccRender();
-  initFirebase();
 }
 
 function ccRender() {
