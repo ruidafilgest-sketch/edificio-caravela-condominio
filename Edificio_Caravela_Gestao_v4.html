@@ -494,12 +494,24 @@ td.bold { font-weight: 600; color: var(--ivory); }
 }
 
 
-/* ─── Firebase status ─── */
+
+/* ─── Estado local ─── */
 #fb-wrap { display:inline-flex; align-items:center; gap:5px; margin-top:5px; }
 #fb-dot  { width:7px; height:7px; border-radius:50%; background:var(--ivory4); flex-shrink:0; }
 #fb-dot.on  { background:#22C55E; box-shadow:0 0 0 0 rgba(34,197,94,.6); animation:fb-pulse 1.8s infinite; }
 #fb-dot.off { background:var(--crit2); }
-#fb-dot.sync{ background:var(--gold); }
+@keyframes fb-pulse {
+  0%   { box-shadow:0 0 0 0 rgba(34,197,94,.6); }
+  70%  { box-shadow:0 0 0 5px rgba(34,197,94,0); }
+  100% { box-shadow:0 0 0 0 rgba(34,197,94,0); }
+}
+
+/* ─── Firebase estado ─── */
+#fb-wrap { display:inline-flex; align-items:center; gap:5px; margin-top:5px; }
+#fb-dot  { width:7px; height:7px; border-radius:50%; background:var(--ivory4); flex-shrink:0; }
+#fb-dot.on   { background:#22C55E; box-shadow:0 0 0 0 rgba(34,197,94,.6); animation:fb-pulse 1.8s infinite; }
+#fb-dot.off  { background:var(--crit2); }
+#fb-dot.sync { background:var(--gold); }
 @keyframes fb-pulse {
   0%   { box-shadow:0 0 0 0 rgba(34,197,94,.6); }
   70%  { box-shadow:0 0 0 5px rgba(34,197,94,0); }
@@ -562,7 +574,9 @@ td.bold { font-weight: 600; color: var(--ivory); }
   <div id="sb-foot">
     Administrador<br>Rui Manuel Martins Gonçalves<br>
     <span style="opacity:.5">v5.0 · Set 2026</span><br>
-    <div id="fb-wrap"><span id="fb-dot"></span><span id="fb-lbl" style="font-size:9px;color:var(--ivory4)">Firebase...</span></div>
+    <div id="fb-wrap"><span id="fb-dot"></span><span id="fb-lbl" style="font-size:9px;color:var(--ivory4)">A ligar...</span></div><br>
+    <div id="fb-wrap"><span id="fb-dot"></span><span id="fb-lbl" style="font-size:9px;color:var(--ivory4)">Local...</span></div>
+    <button onclick="lsApagar()" style="margin-top:4px;background:none;border:none;color:var(--ivory4);font-size:9px;cursor:pointer;padding:0;font-family:var(--f-body)">Apagar dados</button>
   </div>
 </div>
 
@@ -1265,13 +1279,62 @@ var LOGO_DATA = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA1sAAAHmCAIAAAAKl
 
 
 
-// ═══ FIREBASE ════════════════════════════════════════════════════
-// Projecto ESNL — nó separado "caravela/"
-// Chave restrita a ruidafilgest-sketch.github.io
+
+
+// ═══ PERSISTÊNCIA LOCAL (localStorage) ══════════════════════════
+var LS_KEY = "caravela_v5";
+
+function lsGuardar() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      recebimentos: recebimentos,
+      despesas:     despesas,
+      obras:        obras,
+      pendentes:    pendentes,
+      memorial:     memorial,
+      ocorrencias:  ocorrencias
+    }));
+    lsDot("on");
+  } catch(e) { lsDot("off"); }
+}
+
+function lsCarregar() {
+  try {
+    var raw = localStorage.getItem(LS_KEY);
+    if (!raw) { lsDot("on", "Sem dados guardados"); return; }
+    var d = JSON.parse(raw);
+    if (Array.isArray(d.recebimentos)) { recebimentos = d.recebimentos; }
+    if (Array.isArray(d.despesas))     { despesas     = d.despesas; }
+    if (Array.isArray(d.obras))        { obras        = d.obras; }
+    if (Array.isArray(d.pendentes))    { pendentes    = d.pendentes; }
+    if (Array.isArray(d.memorial))     { memorial     = d.memorial; }
+    if (Array.isArray(d.ocorrencias))  { ocorrencias  = d.ocorrencias; }
+    lsDot("on", "Dados carregados ✓");
+  } catch(e) { lsDot("off", "Erro ao carregar"); }
+}
+
+function lsDot(cls, txt) {
+  var dot = document.getElementById("fb-dot");
+  var lbl = document.getElementById("fb-lbl");
+  if (dot) dot.className = cls || "";
+  if (lbl && txt) { lbl.textContent = txt; setTimeout(function(){ lbl.textContent = "Local ✓"; }, 2000); }
+}
+
+function lsApagar() {
+  if (!confirm("Apagar todos os dados guardados localmente? Esta ação não pode ser desfeita.")) return;
+  localStorage.removeItem(LS_KEY);
+  recebimentos=[]; despesas=[]; obras=[]; pendentes=[]; memorial=[]; ocorrencias=[];
+  ccRender(); renderDesp(); renderObras(); renderPendentes(); renderMemorial(); renderOcorr();
+  lsDot("off", "Dados apagados");
+}
+
+
+// ═══ FIREBASE — projecto ESNL · nó caravela/ ════════════════════
 var _db = null;
 
 function initFirebase() {
-  if (typeof firebase === "undefined" || _db) return;
+  if (typeof firebase === "undefined") { setTimeout(initFirebase, 300); return; }
+  if (_db) return;
   try {
     var cfg = {
       apiKey: "AIzaSyBBHAI-u6nuAcn2KWgoZwsavyXZY6o4JhA",
@@ -1283,19 +1346,20 @@ function initFirebase() {
     _db = firebase.database(app);
     fbCarregarTudo();
   } catch(e) {
+    console.warn("Firebase:", e);
     fbDot("off", "offline");
   }
 }
 
 var FB = "caravela";
 
-function fbSet(chave, valor) {
+function fbSet(k, v) {
   if (!_db) return;
-  _db.ref(FB + "/" + chave).set(valor || null);
+  _db.ref(FB + "/" + k).set(v || null);
 }
 
 function fbSync() {
-  if (!_db) return;
+  if (!_db) { fbSync(); return; }
   fbDot("sync", "a guardar...");
   fbSet("recebimentos", recebimentos.length ? recebimentos : null);
   fbSet("despesas",     despesas.length     ? despesas     : null);
@@ -1303,25 +1367,26 @@ function fbSync() {
   fbSet("pendentes",    pendentes.length     ? pendentes    : null);
   fbSet("memorial",     memorial.length      ? memorial     : null);
   fbSet("ocorrencias",  ocorrencias.length   ? ocorrencias  : null);
-  setTimeout(function() { fbDot("on", "Firebase ✓"); }, 600);
+  fbSync();
+  setTimeout(function(){ fbDot("on", "Firebase \u2713"); }, 700);
 }
 
 function fbCarregarTudo() {
   fbDot(null, "a carregar...");
   _db.ref(FB).once("value", function(snap) {
     var d = snap.val() || {};
-    if (Array.isArray(d.recebimentos)) { recebimentos = d.recebimentos; ccRender(); }
-    if (Array.isArray(d.despesas))     { despesas     = d.despesas;     renderDesp(); }
-    if (Array.isArray(d.obras))        { obras        = d.obras;        renderObras(); }
-    if (Array.isArray(d.pendentes))    { pendentes    = d.pendentes;    renderPendentes(); }
-    if (Array.isArray(d.memorial))     { memorial     = d.memorial;     renderMemorial(); }
-    if (Array.isArray(d.ocorrencias))  {
-      ocorrencias = d.ocorrencias;
-      document.getElementById("kpi-ocorr").textContent =
-        ocorrencias.filter(function(o){ return o.estado==="Pendente"; }).length;
-    }
-    fbDot("on", "Firebase ✓");
-  }, function() { fbDot("off", "offline"); });
+    if (Array.isArray(d.recebimentos)) { recebimentos = d.recebimentos; }
+    if (Array.isArray(d.despesas))     { despesas     = d.despesas; }
+    if (Array.isArray(d.obras))        { obras        = d.obras; }
+    if (Array.isArray(d.pendentes))    { pendentes    = d.pendentes; }
+    if (Array.isArray(d.memorial))     { memorial     = d.memorial; }
+    if (Array.isArray(d.ocorrencias))  { ocorrencias  = d.ocorrencias; }
+    ccRender(); renderDesp(); renderObras(); renderPendentes(); renderMemorial(); renderOcorr();
+    document.getElementById("kpi-ocorr").textContent =
+      ocorrencias.filter(function(o){ return o.estado==="Pendente"; }).length;
+    fbSync();
+    fbDot("on", "Firebase \u2713");
+  }, function(){ fbDot("off", "offline"); });
 }
 
 function fbDot(cls, txt) {
@@ -1612,7 +1677,7 @@ function renderOcorr() {
 
 function mudarOcorr(id, v) {
   var o = ocorrencias.find(function(x) { return x.id === id; });
-  if (o) { o.estado = v; fbSync(); }
+  if (o) { o.estado = v; }
   renderOcorr();
   document.getElementById("kpi-ocorr").textContent =
     ocorrencias.filter(function(o) { return o.estado === "Pendente"; }).length;
@@ -2148,8 +2213,9 @@ function ccRegistarRec() {
   }
   fbSync();
   ["cc-r-orc","cc-r-elev","cc-r-fcr","cc-r-obras","cc-r-obs"].forEach(function(id){ document.getElementById(id).value=""; });
+  lsCarregar();
   ccRender();
-  setTimeout(initFirebase, 300);
+  setTimeout(initFirebase, 400);
 }
 
 function ccRender() {
@@ -2497,7 +2563,7 @@ function renderPendentes() {
   }).join("");
 }
 
-function resolverPend(id) { var p=pendentes.find(function(x){return x.id===id;}); if(p) p.estado="resolvido"; fbSync(); renderPendentes(); }
+function resolverPend(id) { var p=pendentes.find(function(x){return x.id===id;}); if(p){ p.estado="resolvido"; fbSync(); } renderPendentes(); }
 function elimPend(id) { if(!confirm("Eliminar?"))return; pendentes=pendentes.filter(function(x){return x.id!==id;}); fbSync(); renderPendentes(); }
 
 // ═══ MEMORIAL ════════════════════════════════════════════════════
@@ -2552,7 +2618,7 @@ function renderMemorial() {
   }).join("");
 }
 
-function resolverMem(id) { var m=memorial.find(function(x){return x.id===id;}); if(m) m.estado="resolvido"; fbSync(); renderMemorial(); }
+function resolverMem(id) { var m=memorial.find(function(x){return x.id===id;}); if(m){ m.estado="resolvido"; fbSync(); } renderMemorial(); }
 function elimMem(id) { if(!confirm("Eliminar?"))return; memorial=memorial.filter(function(x){return x.id!==id;}); fbSync(); renderMemorial(); }
 
 </script>
