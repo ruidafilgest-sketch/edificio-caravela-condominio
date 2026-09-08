@@ -574,9 +574,7 @@ td.bold { font-weight: 600; color: var(--ivory); }
   <div id="sb-foot">
     Administrador<br>Rui Manuel Martins Gonçalves<br>
     <span style="opacity:.5">v5.0 · Set 2026</span><br>
-    <div id="fb-wrap"><span id="fb-dot"></span><span id="fb-lbl" style="font-size:9px;color:var(--ivory4)">A ligar...</span></div><br>
-    <div id="fb-wrap"><span id="fb-dot"></span><span id="fb-lbl" style="font-size:9px;color:var(--ivory4)">Local...</span></div>
-    <button onclick="lsApagar()" style="margin-top:4px;background:none;border:none;color:var(--ivory4);font-size:9px;cursor:pointer;padding:0;font-family:var(--f-body)">Apagar dados</button>
+    <div id="fb-wrap"><span id="fb-dot"></span><span id="fb-lbl" style="font-size:9px;color:var(--ivory4)">A ligar...</span></div>
   </div>
 </div>
 
@@ -1294,7 +1292,7 @@ function lsGuardar() {
       memorial:     memorial,
       ocorrencias:  ocorrencias
     }));
-    lsDot("on");
+    
   } catch(e) { lsDot("off"); }
 }
 
@@ -1309,8 +1307,8 @@ function lsCarregar() {
     if (Array.isArray(d.pendentes))    { pendentes    = d.pendentes; }
     if (Array.isArray(d.memorial))     { memorial     = d.memorial; }
     if (Array.isArray(d.ocorrencias))  { ocorrencias  = d.ocorrencias; }
-    lsDot("on", "Dados carregados ✓");
-  } catch(e) { lsDot("off", "Erro ao carregar"); }
+    fbDot(null, "a carregar...");
+  } catch(e) { fbDot("off", "offline"); }
 }
 
 function lsDot(cls, txt) {
@@ -1325,7 +1323,7 @@ function lsApagar() {
   localStorage.removeItem(LS_KEY);
   recebimentos=[]; despesas=[]; obras=[]; pendentes=[]; memorial=[]; ocorrencias=[];
   ccRender(); renderDesp(); renderObras(); renderPendentes(); renderMemorial(); renderOcorr();
-  lsDot("off", "Dados apagados");
+  fbDot("off", "offline");
 }
 
 
