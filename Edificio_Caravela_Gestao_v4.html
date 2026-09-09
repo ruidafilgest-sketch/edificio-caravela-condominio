@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Condomínio Edifício Caravela · Gestão</title>
+<script src="config.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1331,16 +1332,12 @@ function lsApagar() {
 var _db = null;
 
 function initFirebase() {
-  if (typeof firebase === "undefined") { setTimeout(initFirebase, 300); return; }
+  if (typeof firebase === "undefined" || typeof FIREBASE_CFG === "undefined") {
+    setTimeout(initFirebase, 300); return;
+  }
   if (_db) return;
   try {
-    var cfg = {
-      apiKey: "AIzaSyBBHAI-u6nuAcn2KWgoZwsavyXZY6o4JhA",
-      databaseURL: "https://esnl-contabilidade-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "esnl-contabilidade",
-      appId: "1:829122453343:web:7a516be90941a4761320ea"
-    };
-    var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(cfg);
+    var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(FIREBASE_CFG);
     _db = firebase.database(app);
     fbCarregarTudo();
   } catch(e) {
