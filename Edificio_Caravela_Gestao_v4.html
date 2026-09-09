@@ -1329,14 +1329,32 @@ function lsApagar() {
 
 // ═══ FIREBASE — projecto ESNL · nó caravela/ ════════════════════
 var _db = null;
+var _fbReady = false;
+var _fbCallbacks = [];
+
+var FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBBHAI-u6nuAcn2KWgoZwsavyXZY6o4JhA",
+  authDomain: "esnl-contabilidade.firebaseapp.com",
+  databaseURL: "https://esnl-contabilidade-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "esnl-contabilidade",
+  storageBucket: "esnl-contabilidade.firebasestorage.app",
+  messagingSenderId: "829122453343",
+  appId: "1:829122453343:web:7a516be90941a4761320ea"
+};
+
+function onFirebaseReady(cb) {
+  if (_fbReady) { cb(); } else { _fbCallbacks.push(cb); }
+}
 
 function initFirebase() {
   if (typeof firebase === 'undefined') { setTimeout(initFirebase, 100); return; }
   if (_db) return;
   try {
-    var _c = JSON.parse(atob("eyJhcGlLZXkiOiJBSXphU3lCQkhBSS11Nm51QWNuMktXZ29ad3NhdnlYWlk2bzRKaEEiLCJhdXRoRG9tYWluIjoiZXNubC1jb250YWJpbGlkYWRlLmZpcmViYXNlYXBwLmNvbSIsImRhdGFiYXNlVVJMIjoiaHR0cHM6Ly9lc25sLWNvbnRhYmlsaWRhZGUtZGVmYXVsdC1ydGRiLmV1cm9wZS13ZXN0MS5maXJlYmFzZWRhdGFiYXNlLmFwcCIsInByb2plY3RJZCI6ImVzbmwtY29udGFiaWxpZGFkZSIsInN0b3JhZ2VCdWNrZXQiOiJlc25sLWNvbnRhYmlsaWRhZGUuZmlyZWJhc2VzdG9yYWdlLmFwcCIsIm1lc3NhZ2luZ1NlbmRlcklkIjoiODI5MTIyNDUzMzQzIiwiYXBwSWQiOiIxOjgyOTEyMjQ1MzM0Mzp3ZWI6N2E1MTZiZTkwOTQxYTQ3NjEzMjBlYSJ9"));
-    var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(_c);
+    var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(FIREBASE_CONFIG);
     _db = firebase.database(app);
+    _fbReady = true;
+    _fbCallbacks.forEach(function(cb){ cb(); });
+    _fbCallbacks = [];
     fbCarregarTudo();
   } catch(e) {
     console.error('Firebase init error:', e);
@@ -1347,12 +1365,13 @@ function initFirebase() {
 var FB = "caravela";
 
 function fbSet(k, v) {
-  if (!_db) return;
-  _db.ref(FB + "/" + k).set(v || null);
+  onFirebaseReady(function() {
+    _db.ref(FB + "/" + k).set(v || null);
+  });
 }
 
 function fbSync() {
-  if (!_db) { fbSync(); return; }
+  if (!_fbReady) { lsGuardar(); return; }
   fbDot("sync", "a guardar...");
   fbSet("recebimentos", recebimentos.length ? recebimentos : null);
   fbSet("despesas",     despesas.length     ? despesas     : null);
@@ -1360,26 +1379,25 @@ function fbSync() {
   fbSet("pendentes",    pendentes.length     ? pendentes    : null);
   fbSet("memorial",     memorial.length      ? memorial     : null);
   fbSet("ocorrencias",  ocorrencias.length   ? ocorrencias  : null);
-  fbSync();
+  lsGuardar();
   setTimeout(function(){ fbDot("on", "Firebase \u2713"); }, 700);
 }
 
 function fbCarregarTudo() {
   fbDot(null, "a carregar...");
-  _db.ref(FB).once("value", function(snap) {
-    var d = snap.val() || {};
-    if (Array.isArray(d.recebimentos)) { recebimentos = d.recebimentos; }
-    if (Array.isArray(d.despesas))     { despesas     = d.despesas; }
-    if (Array.isArray(d.obras))        { obras        = d.obras; }
-    if (Array.isArray(d.pendentes))    { pendentes    = d.pendentes; }
-    if (Array.isArray(d.memorial))     { memorial     = d.memorial; }
-    if (Array.isArray(d.ocorrencias))  { ocorrencias  = d.ocorrencias; }
-    ccRender(); renderDesp(); renderObras(); renderPendentes(); renderMemorial(); renderOcorr();
-    document.getElementById("kpi-ocorr").textContent =
-      ocorrencias.filter(function(o){ return o.estado==="Pendente"; }).length;
-    fbSync();
-    fbDot("on", "Firebase \u2713");
-  }, function(){ fbDot("off", "offline"); });
+  onFirebaseReady(function() {
+    _db.ref(FB).once("value", function(snap) {
+      var d = snap.val() || {};
+      if (Array.isArray(d.recebimentos)) { recebimentos = d.recebimentos; }
+      if (Array.isArray(d.despesas))     { despesas     = d.despesas; }
+      if (Array.isArray(d.obras))        { obras        = d.obras; }
+      if (Array.isArray(d.pendentes))    { pendentes    = d.pendentes; }
+      if (Array.isArray(d.memorial))     { memorial     = d.memorial; }
+      if (Array.isArray(d.ocorrencias))  { ocorrencias  = d.ocorrencias; }
+      lsGuardar();
+      fbDot("on", "Firebase \u2713");
+    }, function() { fbDot("off", "offline"); });
+  });
 }
 
 function fbDot(cls, txt) {
@@ -1388,6 +1406,7 @@ function fbDot(cls, txt) {
   if (dot && cls !== null) dot.className = cls || "";
   if (lbl && txt) lbl.textContent = txt;
 }
+
 
 var ORC = {
   orcam: 11750.40, elev: 3296.52, fcr: 1762.92, obras: 10000.20,
@@ -2614,8 +2633,9 @@ function resolverMem(id) { var m=memorial.find(function(x){return x.id===id;}); 
 function elimMem(id) { if(!confirm("Eliminar?"))return; memorial=memorial.filter(function(x){return x.id!==id;}); fbSync(); renderMemorial(); }
 
 
-// Iniciar Firebase imediatamente — igual ao ESNL
+// Auto-init Firebase
 initFirebase();
+
 </script>
 </body>
 </html>
