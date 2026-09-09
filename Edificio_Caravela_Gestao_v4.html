@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Condomínio Edifício Caravela · Gestão</title>
-<script src="config.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1335,7 +1334,8 @@ function initFirebase() {
   if (typeof firebase === 'undefined') { setTimeout(initFirebase, 100); return; }
   if (_db) return;
   try {
-    var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(FIREBASE_CFG);
+    var _c = JSON.parse(atob("eyJhcGlLZXkiOiJBSXphU3lCQkhBSS11Nm51QWNuMktXZ29ad3NhdnlYWlk2bzRKaEEiLCJhdXRoRG9tYWluIjoiZXNubC1jb250YWJpbGlkYWRlLmZpcmViYXNlYXBwLmNvbSIsImRhdGFiYXNlVVJMIjoiaHR0cHM6Ly9lc25sLWNvbnRhYmlsaWRhZGUtZGVmYXVsdC1ydGRiLmV1cm9wZS13ZXN0MS5maXJlYmFzZWRhdGFiYXNlLmFwcCIsInByb2plY3RJZCI6ImVzbmwtY29udGFiaWxpZGFkZSIsInN0b3JhZ2VCdWNrZXQiOiJlc25sLWNvbnRhYmlsaWRhZGUuZmlyZWJhc2VzdG9yYWdlLmFwcCIsIm1lc3NhZ2luZ1NlbmRlcklkIjoiODI5MTIyNDUzMzQzIiwiYXBwSWQiOiIxOjgyOTEyMjQ1MzM0Mzp3ZWI6N2E1MTZiZTkwOTQxYTQ3NjEzMjBlYSJ9"));
+    var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(_c);
     _db = firebase.database(app);
     fbCarregarTudo();
   } catch(e) {
