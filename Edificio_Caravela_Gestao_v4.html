@@ -2208,7 +2208,6 @@ function ccRegistarRec() {
   ["cc-r-orc","cc-r-elev","cc-r-fcr","cc-r-obras","cc-r-obs"].forEach(function(id){ document.getElementById(id).value=""; });
   lsCarregar();
   ccRender();
-  setTimeout(initFirebase, 400);
 }
 
 function ccRender() {
@@ -2614,6 +2613,9 @@ function renderMemorial() {
 function resolverMem(id) { var m=memorial.find(function(x){return x.id===id;}); if(m){ m.estado="resolvido"; fbSync(); } renderMemorial(); }
 function elimMem(id) { if(!confirm("Eliminar?"))return; memorial=memorial.filter(function(x){return x.id!==id;}); fbSync(); renderMemorial(); }
 
+
+// Iniciar Firebase imediatamente — igual ao ESNL
+initFirebase();
 </script>
 </body>
 </html>
