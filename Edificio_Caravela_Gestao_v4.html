@@ -949,11 +949,13 @@ td.bold { font-weight: 600; color: var(--ivory); }
             </select>
           </div>
           <div class="fg"><label>Data</label><input type="date" id="doc-data"></div>
-          <div class="fg fg-full"><label>Link (URL) — opcional</label><input type="url" id="doc-url" placeholder="https://..."></div>
+          <div class="fg fg-full"><label>Ficheiro (PDF, imagem...) — carrega do teu computador</label><input type="file" id="doc-ficheiro"></div>
+          <div class="fg fg-full"><label>Ou Link (URL) — se já estiver alojado noutro lado</label><input type="url" id="doc-url" placeholder="https://..."></div>
           <div class="fg fg-full"><label>Observações</label><input type="text" id="doc-obs" placeholder="Notas sobre o documento..."></div>
         </div>
         <button class="btn btn-gold" id="doc-btn-add" onclick="addDoc()">Adicionar à biblioteca</button>
         <button class="btn btn-ghost" id="doc-btn-cancelar" style="display:none" onclick="docCancelarEdicao()">Cancelar edição</button>
+        <span id="doc-upload-status" style="margin-left:10px;font-size:12px;color:var(--ivory4)"></span>
       </div>
     </div>
     <div class="panel">
@@ -1375,7 +1377,6 @@ var FIREBASE_CONFIG = {
   authDomain: "esnl-contabilidade.firebaseapp.com",
   databaseURL: "https://esnl-contabilidade-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "esnl-contabilidade",
-  storageBucket: "esnl-contabilidade.firebasestorage.app",
   messagingSenderId: "829122453343",
   appId: "1:829122453343:web:7a516be90941a4761320ea"
 };
@@ -1398,6 +1399,51 @@ function initFirebase() {
     console.error('Firebase init error:', e);
     fbDot("off", "offline");
   }
+}
+
+// ═══ UPLOAD DE FICHEIROS (Cloudinary — unsigned upload, gratuito, sem cartão) ═════════════════════
+var LIMITE_UPLOAD_MB = 15;
+var CLOUDINARY_CLOUD_NAME = "zupgt8we";
+var CLOUDINARY_UPLOAD_PRESET = "Caravela";
+
+function fbUploadFile(file, pastaPrefixo, onProgress, onDone, onError) {
+  if (!file) { onError("Nenhum ficheiro selecionado."); return; }
+  if (file.size > LIMITE_UPLOAD_MB * 1024 * 1024) {
+    onError("Ficheiro demasiado grande (máx. " + LIMITE_UPLOAD_MB + "MB). Este pesa " + (file.size/1024/1024).toFixed(1) + "MB.");
+    return;
+  }
+  var url = "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD_NAME + "/auto/upload";
+  var fd = new FormData();
+  fd.append("file", file);
+  fd.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", url, true);
+
+  if (xhr.upload && onProgress) {
+    xhr.upload.onprogress = function(evt) {
+      if (evt.lengthComputable) onProgress(Math.round((evt.loaded / evt.total) * 100));
+    };
+  }
+
+  xhr.onload = function() {
+    var resp = null;
+    try { resp = JSON.parse(xhr.responseText); } catch(e) { resp = null; }
+    if (xhr.status >= 200 && xhr.status < 300 && resp && resp.secure_url) {
+      onDone(resp.secure_url, file.name);
+    } else {
+      var msg = (resp && resp.error && resp.error.message) ? resp.error.message : ("Falha no upload (HTTP " + xhr.status + ").");
+      console.error("Erro no upload Cloudinary:", msg);
+      if (onError) onError("Falha no upload: " + msg);
+    }
+  };
+
+  xhr.onerror = function() {
+    console.error("Erro de rede no upload Cloudinary");
+    if (onError) onError("Falha no upload: erro de ligação à internet.");
+  };
+
+  xhr.send(fd);
 }
 
 var FB = "caravela";
@@ -1922,18 +1968,40 @@ function formatMesAno(dataStr) {
 }
 
 function adicionarAnexoProc(procId) {
-  var p = processos.find(function(x){ return x.id === procId; });
-  if (!p) return;
-  if (!p.anexos) p.anexos = [];
   var titEl = document.getElementById("anexo-tit-" + procId);
   var t = titEl.value.trim();
   if (!t) { alert("Indique o título do documento."); return; }
-  p.anexos.push({
-    id: Date.now(),
-    titulo: t,
-    url: document.getElementById("anexo-url-" + procId).value.trim(),
-    data: document.getElementById("anexo-data-" + procId).value
-  });
+  var dataVal = document.getElementById("anexo-data-" + procId).value;
+  var fileInput = document.getElementById("anexo-ficheiro-" + procId);
+  var file = fileInput && fileInput.files && fileInput.files[0];
+  var btn = document.getElementById("anexo-btn-" + procId);
+  var statusEl = document.getElementById("anexo-status-" + procId);
+  if (file) {
+    if (btn) btn.disabled = true;
+    if (statusEl) statusEl.textContent = "A carregar... 0%";
+    fbUploadFile(file, "processos/" + procId,
+      function(pct) { if (statusEl) statusEl.textContent = "A carregar... " + pct + "%"; },
+      function(url) {
+        if (btn) btn.disabled = false;
+        if (statusEl) statusEl.textContent = "";
+        finalizarAnexoProc(procId, t, url, dataVal);
+      },
+      function(err) {
+        if (btn) btn.disabled = false;
+        if (statusEl) statusEl.textContent = "";
+        alert(typeof err === "string" ? err : "Falha no upload do ficheiro.");
+      }
+    );
+  } else {
+    finalizarAnexoProc(procId, t, document.getElementById("anexo-url-" + procId).value.trim(), dataVal);
+  }
+}
+
+function finalizarAnexoProc(procId, titulo, url, data) {
+  var p = processos.find(function(x){ return x.id === procId; });
+  if (!p) return;
+  if (!p.anexos) p.anexos = [];
+  p.anexos.push({ id: Date.now(), titulo: titulo, url: url, data: data });
   fbSync();
   renderProc();
 }
@@ -1973,11 +2041,13 @@ function renderProc() {
     var anexosBloco = '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule2)">' +
       '<div style="font-size:11.5px;color:var(--ivory4);margin-bottom:4px">Documentos de suporte (' + anexos.length + ")</div>" +
       anexosLista +
-      '<div class="no-print" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">' +
+      '<div class="no-print" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;align-items:flex-end">' +
         '<div class="fg" style="flex:2;min-width:160px;margin-bottom:0"><input type="text" id="anexo-tit-' + p.id + '" placeholder="Título (ex: Carta da advogada 12/09)"></div>' +
-        '<div class="fg" style="flex:2;min-width:140px;margin-bottom:0"><input type="url" id="anexo-url-' + p.id + '" placeholder="Link (opcional)"></div>' +
+        '<div class="fg" style="flex:2;min-width:160px;margin-bottom:0"><input type="file" id="anexo-ficheiro-' + p.id + '"></div>' +
+        '<div class="fg" style="flex:2;min-width:140px;margin-bottom:0"><input type="url" id="anexo-url-' + p.id + '" placeholder="Ou link (opcional)"></div>' +
         '<div class="fg" style="flex:1;min-width:120px;margin-bottom:0"><input type="date" id="anexo-data-' + p.id + '"></div>' +
-        '<button class="btn btn-ghost btn-sm" onclick="adicionarAnexoProc(' + p.id + ')">+ Adicionar</button>' +
+        '<button class="btn btn-ghost btn-sm" id="anexo-btn-' + p.id + '" onclick="adicionarAnexoProc(' + p.id + ')">+ Adicionar</button>' +
+        '<span id="anexo-status-' + p.id + '" style="font-size:11.5px;color:var(--ivory4)"></span>' +
       "</div>" +
     "</div>";
     return '<div class="proc ' + cls + '">' +
@@ -3031,11 +3101,35 @@ var _docEditando = null;
 function addDoc() {
   var t = document.getElementById("doc-titulo").value.trim();
   if (!t) { alert("Indique o título do documento."); return; }
+  var fileInput = document.getElementById("doc-ficheiro");
+  var file = fileInput && fileInput.files && fileInput.files[0];
+  if (file) {
+    document.getElementById("doc-btn-add").disabled = true;
+    document.getElementById("doc-upload-status").textContent = "A carregar... 0%";
+    fbUploadFile(file, "documentos",
+      function(pct) { document.getElementById("doc-upload-status").textContent = "A carregar... " + pct + "%"; },
+      function(url) {
+        document.getElementById("doc-btn-add").disabled = false;
+        document.getElementById("doc-upload-status").textContent = "";
+        finalizarAddDoc(url);
+      },
+      function(err) {
+        document.getElementById("doc-btn-add").disabled = false;
+        document.getElementById("doc-upload-status").textContent = "";
+        alert(typeof err === "string" ? err : "Falha no upload do ficheiro.");
+      }
+    );
+  } else {
+    finalizarAddDoc(document.getElementById("doc-url").value.trim());
+  }
+}
+
+function finalizarAddDoc(urlFinal) {
   var campos = {
-    titulo: t,
+    titulo: document.getElementById("doc-titulo").value.trim(),
     tipo: document.getElementById("doc-tipo").value,
     data: document.getElementById("doc-data").value,
-    url: document.getElementById("doc-url").value.trim(),
+    url: urlFinal,
     obs: document.getElementById("doc-obs").value.trim()
   };
   if (_docEditando) {
@@ -3067,11 +3161,12 @@ function editarDoc(id) {
 
 function docCancelarEdicao() {
   _docEditando = null;
-  ["doc-titulo","doc-data","doc-url","doc-obs"].forEach(function(id){ document.getElementById(id).value=""; });
+  ["doc-titulo","doc-data","doc-url","doc-obs","doc-ficheiro"].forEach(function(id){ document.getElementById(id).value=""; });
   document.getElementById("doc-tipo").value = "Ata";
   document.getElementById("doc-panel-hd").textContent = "Adicionar documento";
   document.getElementById("doc-btn-add").textContent = "Adicionar à biblioteca";
   document.getElementById("doc-btn-cancelar").style.display = "none";
+  document.getElementById("doc-upload-status").textContent = "";
 }
 
 function elimDoc(id) {
