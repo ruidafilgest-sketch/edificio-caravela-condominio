@@ -660,7 +660,7 @@ td.bold { font-weight: 600; color: var(--ivory); }
       <div class="panel-bd" style="padding:0">
         <div class="tw">
           <table>
-            <thead><tr><th>Fração</th><th>Tipo</th><th class="c">Permilagem</th><th>Proprietário</th><th>NIF</th><th>Email</th><th>Telefone</th><th>Morada</th></tr></thead>
+            <thead><tr><th>Fração</th><th>Tipo</th><th class="c">Permilagem</th><th>Proprietário</th><th>NIF</th><th>Email</th><th>Telefone</th><th>Morada</th><th class="no-print"></th></tr></thead>
             <tbody id="tbody-cond"></tbody>
           </table>
         </div>
@@ -724,7 +724,7 @@ td.bold { font-weight: 600; color: var(--ivory); }
       </div>
     </div>
     <div id="t-orc-desp" style="display:none">
-      <div class="panel"><div class="panel-hd"><h2>Lançar despesa</h2></div><div class="panel-bd">
+      <div class="panel"><div class="panel-hd"><h2 id="desp-panel-hd">Lançar despesa</h2></div><div class="panel-bd">
         <div class="fg-row">
           <div class="fg"><label>Data</label><input type="date" id="d-data"></div>
           <div class="fg"><label>Rubrica</label>
@@ -736,13 +736,14 @@ td.bold { font-weight: 600; color: var(--ivory); }
           <div class="fg"><label>Valor (€)</label><input type="number" id="d-valor" step="0.01" placeholder="0,00"></div>
           <div class="fg fg-full"><label>Descrição / N.º Fatura</label><input type="text" id="d-desc" placeholder="Referência documental"></div>
         </div>
-        <button class="btn btn-gold" onclick="lancarDesp()">Registar despesa</button>
+        <button class="btn btn-gold" id="desp-btn-add" onclick="lancarDesp()">Registar despesa</button>
+        <button class="btn btn-ghost" id="desp-btn-cancelar" style="display:none" onclick="despCancelarEdicao()">Cancelar edição</button>
       </div></div>
     </div>
     <div id="t-orc-hist" style="display:none">
       <div class="panel"><div class="panel-hd"><h2>Histórico de despesas</h2><button class="btn btn-ghost btn-sm" onclick="exportDesp()">Exportar CSV</button></div>
-        <div class="panel-bd" style="padding:0"><table><thead><tr><th>Data</th><th>Rubrica</th><th>Fornecedor</th><th>Descrição</th><th class="r">Valor</th></tr></thead>
-        <tbody id="tb-desp"><tr><td colspan="5" style="text-align:center;color:var(--ivory4);padding:24px">Sem lançamentos registados.</td></tr></tbody></table></div>
+        <div class="panel-bd" style="padding:0"><table><thead><tr><th>Data</th><th>Rubrica</th><th>Fornecedor</th><th>Descrição</th><th class="r">Valor</th><th class="no-print"></th></tr></thead>
+        <tbody id="tb-desp"><tr><td colspan="6" style="text-align:center;color:var(--ivory4);padding:24px">Sem lançamentos registados.</td></tr></tbody></table></div>
       </div>
     </div>
   </div>
@@ -778,24 +779,21 @@ td.bold { font-weight: 600; color: var(--ivory); }
   <!-- JURÍDICO -->
   <div id="view-juridico" class="view">
     <div class="panel" style="margin-bottom:16px">
-      <div class="panel-hd"><h2>Registar processo</h2></div>
+      <div class="panel-hd"><h2 id="j-panel-hd">Registar processo</h2></div>
       <div class="panel-bd">
         <div class="fg-row">
           <div class="fg fg-full"><label>Título</label><input type="text" id="j-tit" placeholder="Título do processo"></div>
           <div class="fg"><label>Gravidade</label><select id="j-grav"><option>Crítico</option><option>Grave</option><option>Normal</option></select></div>
           <div class="fg"><label>Data início</label><input type="date" id="j-data"></div>
           <div class="fg"><label>Prazo</label><input type="date" id="j-prazo"></div>
+          <div class="fg fg-full"><label>Contexto / Referências</label><input type="text" id="j-ctx" placeholder="Ex: Dr.ª Patrícia Silva · GNR · Ata n.º 32"></div>
           <div class="fg fg-full"><label>Descrição</label><textarea id="j-desc" rows="3"></textarea></div>
         </div>
-        <button class="btn btn-gold" onclick="registarProc()">Registar processo</button>
+        <button class="btn btn-gold" id="j-btn-add" onclick="registarProc()">Registar processo</button>
+        <button class="btn btn-ghost" id="j-btn-cancelar" style="display:none" onclick="procCancelarEdicao()">Cancelar edição</button>
       </div>
     </div>
-    <div id="lista-proc">
-      <div class="proc crit"><div class="proc-title">Sinistro Nov/2025 — Derrube de Colunas por Camião</div><div class="proc-meta">Novembro 2025 · Dr.ª Patrícia Silva · GNR · <span class="tag tag-crit">Crítico</span></div><div class="proc-body">Camião com grua derrubou três colunas. Auto de sinistro GNR lavrado. Seguro não participado pela Flat Condomínios. Ação judicial em preparação. Possível responsabilização da Flat por omissão.</div></div>
-      <div class="proc crit"><div class="proc-title">Flat Condomínios — Auditoria Contabilística 2019-2026</div><div class="proc-meta">Abril 2026 · 60 287 € em análise · Ata n.º 32 · <span class="tag tag-crit">Crítico</span></div><div class="proc-body">Obra cobertura: 64 608 € aprovados vs 29 108 € documentados — diferença 35 500 €. Conta CA encerrada unilateralmente. Extratos 2023-2026 não entregues. Pendente: decisão de assembleia.</div></div>
-      <div class="proc curso"><div class="proc-title">Infiltrações — Cobertura (Empresa Fortificado)</div><div class="proc-meta">Obra original Jul 2018 · <span class="tag tag-warn">Em curso</span></div><div class="proc-body">Infiltrações activas. Auditoria técnica concluída. Aguarda relatório para acção contra empreiteiro.</div></div>
-      <div class="proc curso"><div class="proc-title">Dívidas de Condóminos — 6 996 €</div><div class="proc-meta">23 frações em débito · AT desde 2016 · <span class="tag tag-warn">Em curso</span></div><div class="proc-body">AT (Vitor Pinto) 1 856 € desde 2016. AC (Antonio Miranda) 1 599 € desde 2020. O (José Pereira) 971 € desde 2018.</div></div>
-    </div>
+    <div id="lista-proc"></div>
   </div>
 
   <!-- ASSEMBLEIA AO VIVO -->
@@ -939,7 +937,7 @@ td.bold { font-weight: 600; color: var(--ivory); }
   <!-- DOCUMENTOS -->
   <div id="view-docs" class="view">
     <div class="panel" style="margin-bottom:16px">
-      <div class="panel-hd"><h2>Adicionar documento</h2></div>
+      <div class="panel-hd"><h2 id="doc-panel-hd">Adicionar documento</h2></div>
       <div class="panel-bd">
         <div class="fg-row">
           <div class="fg fg-full"><label>Título do documento</label><input type="text" id="doc-titulo" placeholder="Ex: Ata n.º 33 — AG Extraordinária"></div>
@@ -954,7 +952,8 @@ td.bold { font-weight: 600; color: var(--ivory); }
           <div class="fg fg-full"><label>Link (URL) — opcional</label><input type="url" id="doc-url" placeholder="https://..."></div>
           <div class="fg fg-full"><label>Observações</label><input type="text" id="doc-obs" placeholder="Notas sobre o documento..."></div>
         </div>
-        <button class="btn btn-gold" onclick="addDoc()">Adicionar à biblioteca</button>
+        <button class="btn btn-gold" id="doc-btn-add" onclick="addDoc()">Adicionar à biblioteca</button>
+        <button class="btn btn-ghost" id="doc-btn-cancelar" style="display:none" onclick="docCancelarEdicao()">Cancelar edição</button>
       </div>
     </div>
     <div class="panel">
@@ -1043,7 +1042,8 @@ td.bold { font-weight: 600; color: var(--ivory); }
             <div class="fg"><label>Quota Obras (€)</label><input type="number" id="cc-r-obras" step="0.01" placeholder="0,00"></div>
           </div>
           <div class="fg"><label>Observações</label><input type="text" id="cc-r-obs" placeholder="Ex: inclui pagamentos em atraso de..."></div>
-          <button class="btn btn-gold" onclick="ccRegistarRec()">Registar recebimento</button>
+          <button class="btn btn-gold" id="cc-btn-rec" onclick="ccRegistarRec()">Registar recebimento</button>
+          <button class="btn btn-ghost" id="cc-btn-rec-cancelar" style="display:none" onclick="cancelarEdicaoRec()">Cancelar edição</button>
         </div>
       </div>
       <div class="panel">
@@ -1147,7 +1147,7 @@ td.bold { font-weight: 600; color: var(--ivory); }
   <!-- LIVRO DE OBRAS -->
   <div id="view-obras" class="view">
     <div class="panel" style="margin-bottom:16px">
-      <div class="panel-hd"><h2>Registar intervenção</h2></div>
+      <div class="panel-hd"><h2 id="ob-panel-hd">Registar intervenção</h2></div>
       <div class="panel-bd">
         <div class="fg-row">
           <div class="fg"><label>Data</label><input type="date" id="ob-data"></div>
@@ -1159,7 +1159,8 @@ td.bold { font-weight: 600; color: var(--ivory); }
           <div class="fg fg-full"><label>Descrição</label><textarea id="ob-desc" rows="2" placeholder="Descreva o trabalho realizado..."></textarea></div>
           <div class="fg"><label>Estado</label><select id="ob-estado"><option value="concluida">Concluída</option><option value="pendente">Pendente / Em curso</option></select></div>
         </div>
-        <button class="btn btn-gold" onclick="registarObra()">Registar</button>
+        <button class="btn btn-gold" id="ob-btn-add" onclick="registarObra()">Registar</button>
+        <button class="btn btn-ghost" id="ob-btn-cancelar" style="display:none" onclick="obCancelarEdicao()">Cancelar edição</button>
       </div>
     </div>
     <div class="panel">
@@ -1229,6 +1230,42 @@ td.bold { font-weight: 600; color: var(--ivory); }
 </div><!-- /shell -->
 
 <!-- MODAL ATA FINAL -->
+<div class="modal-bg" id="modal-cond-edit">
+  <div class="modal" style="width:640px">
+    <div class="modal-hd">
+      <h3>Editar ficha — Fração <span id="ce-frac"></span></h3>
+      <button onclick="fecharEdicaoCond()">Fechar</button>
+    </div>
+    <div class="modal-bd">
+      <div class="fg-row">
+        <div class="fg"><label>Tipo</label>
+          <select id="ce-tipo">
+            <option value="Apartamento">Apartamento</option>
+            <option value="Garagem">Garagem</option>
+            <option value="Loja">Loja</option>
+            <option value="Armazém">Armazém</option>
+          </select>
+        </div>
+        <div class="fg"><label>Permilagem (‰)</label><input type="number" id="ce-perm" step="0.1" oninput="ceAtualizarSomaPerm()"></div>
+        <div class="fg" style="display:flex;align-items:flex-end;gap:8px;padding-bottom:8px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12.5px"><input type="checkbox" id="ce-elev" style="width:auto"> Paga quota de elevador</label>
+        </div>
+        <div class="fg fg-full" id="ce-aviso-perm" style="display:none;color:var(--crit2,#c0392b);font-size:11.5px"></div>
+        <div class="fg fg-full"><label>Proprietário</label><input type="text" id="ce-nome" placeholder="Nome completo"></div>
+        <div class="fg"><label>NIF</label><input type="text" id="ce-nif" placeholder="NIF"></div>
+        <div class="fg"><label>Telefone</label><input type="text" id="ce-tel" placeholder="Telefone"></div>
+        <div class="fg fg-full"><label>Email</label><input type="email" id="ce-email" placeholder="email@exemplo.com"></div>
+        <div class="fg fg-full"><label>Morada</label><input type="text" id="ce-morada" placeholder="Morada"></div>
+        <div class="fg"><label>Código postal</label><input type="text" id="ce-cp" placeholder="0000-000"></div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-ghost" onclick="fecharEdicaoCond()">Cancelar</button>
+      <button class="btn btn-gold" onclick="guardarEdicaoCond()">Guardar alterações</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-ata">
   <div class="modal">
     <div class="modal-hd">
@@ -1286,7 +1323,9 @@ function lsGuardar() {
       pendentes:    pendentes,
       memorial:     memorial,
       ocorrencias:  ocorrencias,
-      documentos:   documentos
+      documentos:   documentos,
+      condominos:   D,
+      processos:    processos
     }));
     
   } catch(e) { lsDot("off"); }
@@ -1304,6 +1343,8 @@ function lsCarregar() {
     if (Array.isArray(d.memorial))     { memorial     = d.memorial; }
     if (Array.isArray(d.ocorrencias))  { ocorrencias  = d.ocorrencias; }
     if (Array.isArray(d.documentos))   { documentos   = d.documentos; }
+    if (Array.isArray(d.condominos) && d.condominos.length) { D = d.condominos; }
+    if (Array.isArray(d.processos)  && d.processos.length)  { processos = d.processos; }
     fbDot(null, "a carregar...");
   } catch(e) { fbDot("off", "offline"); }
 }
@@ -1377,6 +1418,8 @@ function fbSync() {
   fbSet("memorial",     memorial.length      ? memorial     : null);
   fbSet("ocorrencias",  ocorrencias.length   ? ocorrencias  : null);
   fbSet("documentos",   documentos.length    ? documentos   : null);
+  fbSet("condominos",   D.length             ? D            : null);
+  fbSet("processos",    processos.length     ? processos    : null);
   lsGuardar();
   setTimeout(function(){ fbDot("on", "Firebase \u2713"); }, 700);
 }
@@ -1393,6 +1436,8 @@ function fbCarregarTudo() {
       if (Array.isArray(d.memorial))     memorial     = d.memorial;
       if (Array.isArray(d.ocorrencias))  ocorrencias  = d.ocorrencias;
       if (Array.isArray(d.documentos))   documentos   = d.documentos;
+      if (Array.isArray(d.condominos) && d.condominos.length) D = d.condominos;
+      if (Array.isArray(d.processos)  && d.processos.length)  processos = d.processos;
       lsGuardar();
       fbDot("on", "Firebase \u2713");
     }, function(e) {
@@ -1502,6 +1547,7 @@ function nav(id, el) {
   if (id === "presencas") initMapaPresencas();
   if (id === "cc") ccRender();
   if (id === "pendentes") { populatePendFrac(); renderPendentes(); }
+  if (id === "juridico") renderProc();
   if (id === "memorial") { populateMemFrac(); renderMemorial(); }
   if (id === "obras") renderObras();
   if (id === "docs") renderDocs();
@@ -1540,8 +1586,70 @@ function renderCond(list) {
       '<td style="font-size:12px">' + emailHtml + "</td>" +
       '<td style="font-size:12px;white-space:nowrap">' + (c.tel||"—") + "</td>" +
       '<td class="muted" style="font-size:11.5px">' + c.morada + " · " + c.cp + "</td>" +
+      '<td class="no-print"><button class="btn btn-ghost btn-sm" onclick="abrirEdicaoCond(\'' + c.f + '\')">Editar</button></td>' +
       "</tr>";
   }).join("");
+}
+
+// ═══ EDIÇÃO DE FICHA DE CONDÓMINO ═══════════════════════════════════
+var _condEditando = null;
+
+function abrirEdicaoCond(f) {
+  var c = D.find(function(x){ return x.f === f; });
+  if (!c) return;
+  _condEditando = f;
+  document.getElementById("ce-frac").textContent = f;
+  document.getElementById("ce-tipo").value = c.t;
+  document.getElementById("ce-perm").value = c.p;
+  document.getElementById("ce-elev").checked = !!c.elev;
+  document.getElementById("ce-nome").value = c.nome || "";
+  document.getElementById("ce-nif").value = c.nif || "";
+  document.getElementById("ce-email").value = c.email || "";
+  document.getElementById("ce-tel").value = c.tel || "";
+  document.getElementById("ce-morada").value = c.morada || "";
+  document.getElementById("ce-cp").value = c.cp || "";
+  ceAtualizarSomaPerm();
+  document.getElementById("modal-cond-edit").classList.add("on");
+}
+
+function fecharEdicaoCond() {
+  document.getElementById("modal-cond-edit").classList.remove("on");
+  _condEditando = null;
+}
+
+function ceAtualizarSomaPerm() {
+  var novaP = parseFloat(document.getElementById("ce-perm").value) || 0;
+  var soma = D.reduce(function(s,c){ return s + (c.f===_condEditando ? novaP : c.p); }, 0);
+  soma = Math.round(soma*10)/10;
+  var avisoEl = document.getElementById("ce-aviso-perm");
+  if (avisoEl) {
+    if (Math.abs(soma-100) > 0.05) {
+      avisoEl.textContent = "Atenção: a soma de todas as permilagens ficaria em " + soma.toFixed(1).replace(".",",") + "‰ (devia ser 100,0‰).";
+      avisoEl.style.display = "block";
+    } else {
+      avisoEl.style.display = "none";
+    }
+  }
+}
+
+function guardarEdicaoCond() {
+  if (!_condEditando) return;
+  var c = D.find(function(x){ return x.f === _condEditando; });
+  if (!c) return;
+  var nome = document.getElementById("ce-nome").value.trim();
+  if (!nome) { alert("Indique o nome do proprietário."); return; }
+  c.t = document.getElementById("ce-tipo").value;
+  c.p = parseFloat(document.getElementById("ce-perm").value) || 0;
+  c.elev = document.getElementById("ce-elev").checked;
+  c.nome = nome;
+  c.nif = document.getElementById("ce-nif").value.trim();
+  c.email = document.getElementById("ce-email").value.trim();
+  c.tel = document.getElementById("ce-tel").value.trim();
+  c.morada = document.getElementById("ce-morada").value.trim();
+  c.cp = document.getElementById("ce-cp").value.trim();
+  fbSync();
+  fecharEdicaoCond();
+  filtrarCond();
 }
 
 function filtrarCond() {
@@ -1590,30 +1698,71 @@ function exportCondPDF() {
 }
 
 // ═══ DESPESAS ══════════════════════════════════════════════════════
+var _despEditando = null;
+
 function lancarDesp() {
   var data = document.getElementById("d-data").value;
   var v = parseFloat(document.getElementById("d-valor").value);
   if (!data || !v || isNaN(v)) { alert("Preencha a data e o valor."); return; }
-  despesas.push({
+  var campos = {
     data: data, rubrica: document.getElementById("d-rubrica").value,
     forn: document.getElementById("d-forn").value.trim(),
     valor: v, desc: document.getElementById("d-desc").value.trim()
-  });
+  };
+  if (_despEditando) {
+    var d = despesas.find(function(x){ return x.id === _despEditando; });
+    if (d) { d.data=campos.data; d.rubrica=campos.rubrica; d.forn=campos.forn; d.valor=campos.valor; d.desc=campos.desc; }
+  } else {
+    campos.id = Date.now();
+    despesas.push(campos);
+  }
+  despCancelarEdicao();
   renderDesp();
   fbSync();
+}
+
+function editarDesp(id) {
+  var d = despesas.find(function(x){ return x.id === id; });
+  if (!d) return;
+  _despEditando = id;
+  document.getElementById("d-data").value = d.data || "";
+  document.getElementById("d-rubrica").value = d.rubrica || "";
+  document.getElementById("d-forn").value = d.forn || "";
+  document.getElementById("d-valor").value = d.valor || "";
+  document.getElementById("d-desc").value = d.desc || "";
+  document.getElementById("desp-panel-hd").textContent = "Editar despesa";
+  document.getElementById("desp-btn-add").textContent = "Guardar alterações";
+  document.getElementById("desp-btn-cancelar").style.display = "inline-block";
+  document.getElementById("d-data").scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function despCancelarEdicao() {
+  _despEditando = null;
   ["d-data","d-forn","d-valor","d-desc"].forEach(function(id) { document.getElementById(id).value = ""; });
+  document.getElementById("desp-panel-hd").textContent = "Lançar despesa";
+  document.getElementById("desp-btn-add").textContent = "Registar despesa";
+  document.getElementById("desp-btn-cancelar").style.display = "none";
+}
+
+function elimDesp(id) {
+  if (!confirm("Eliminar esta despesa?")) return;
+  despesas = despesas.filter(function(x){ return x.id !== id; });
+  if (_despEditando === id) despCancelarEdicao();
+  renderDesp();
+  fbSync();
 }
 
 function renderDesp() {
   var tb = document.getElementById("tb-desp");
   if (!despesas.length) {
-    tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ivory4);padding:24px">Sem lançamentos registados.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--ivory4);padding:24px">Sem lançamentos registados.</td></tr>';
     return;
   }
   tb.innerHTML = despesas.slice().reverse().map(function(d) {
     return "<tr><td>" + d.data + "</td><td>" + d.rubrica + "</td><td>" + (d.forn||"—") + "</td>" +
       '<td style="font-size:12px">' + (d.desc||"—") + "</td>" +
-      '<td class="r bold">' + d.valor.toFixed(2).replace(".",",") + " €</td></tr>";
+      '<td class="r bold">' + d.valor.toFixed(2).replace(".",",") + " €</td>" +
+      "<td class='no-print' style='white-space:nowrap'><button class='btn btn-ghost btn-sm' onclick='editarDesp(" + d.id + ")'>Editar</button> <button class='btn btn-crit btn-sm' onclick='elimDesp(" + d.id + ")'>Eliminar</button></td></tr>";
   }).join("");
 }
 
@@ -1706,23 +1855,94 @@ function elimOcorr(id) {
 }
 
 // ═══ JURÍDICO ══════════════════════════════════════════════════════
+var _procEditando = null;
+
 function registarProc() {
   var t = document.getElementById("j-tit").value.trim();
-  var g = document.getElementById("j-grav").value;
   if (!t) { alert("Indique o título."); return; }
-  var d = document.getElementById("j-data").value;
-  var p = document.getElementById("j-prazo").value;
-  var desc = document.getElementById("j-desc").value.trim();
-  var cls = g === "Crítico" ? "crit" : g === "Grave" ? "curso" : "";
-  var tag = g === "Crítico" ? "tag-crit" : g === "Grave" ? "tag-warn" : "tag-ok";
-  var el = document.createElement("div");
-  el.className = "proc " + cls;
-  el.innerHTML = '<div class="proc-title">' + t + "</div>" +
-    '<div class="proc-meta">Início: ' + (d||"—") + (p?" · Prazo: "+p:"") +
-    ' · <span class="tag ' + tag + '">' + g + "</span></div>" +
-    '<div class="proc-body">' + (desc||"—") + "</div>";
-  document.getElementById("lista-proc").prepend(el);
-  ["j-tit","j-data","j-prazo","j-desc"].forEach(function(id) { document.getElementById(id).value = ""; });
+  var campos = {
+    titulo: t,
+    gravidade: document.getElementById("j-grav").value,
+    dataInicio: document.getElementById("j-data").value,
+    prazo: document.getElementById("j-prazo").value,
+    contexto: document.getElementById("j-ctx").value.trim(),
+    desc: document.getElementById("j-desc").value.trim()
+  };
+  if (_procEditando) {
+    var p = processos.find(function(x){ return x.id === _procEditando; });
+    if (p) { p.titulo=campos.titulo; p.gravidade=campos.gravidade; p.dataInicio=campos.dataInicio; p.prazo=campos.prazo; p.contexto=campos.contexto; p.desc=campos.desc; }
+  } else {
+    campos.id = Date.now();
+    processos.unshift(campos);
+  }
+  procCancelarEdicao();
+  fbSync();
+  renderProc();
+}
+
+function editarProc(id) {
+  var p = processos.find(function(x){ return x.id === id; });
+  if (!p) return;
+  _procEditando = id;
+  document.getElementById("j-tit").value = p.titulo || "";
+  document.getElementById("j-grav").value = p.gravidade || "Normal";
+  document.getElementById("j-data").value = p.dataInicio || "";
+  document.getElementById("j-prazo").value = p.prazo || "";
+  document.getElementById("j-ctx").value = p.contexto || "";
+  document.getElementById("j-desc").value = p.desc || "";
+  document.getElementById("j-panel-hd").textContent = "Editar processo";
+  document.getElementById("j-btn-add").textContent = "Guardar alterações";
+  document.getElementById("j-btn-cancelar").style.display = "inline-block";
+  document.getElementById("j-tit").scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function procCancelarEdicao() {
+  _procEditando = null;
+  ["j-tit","j-data","j-prazo","j-ctx","j-desc"].forEach(function(id) { document.getElementById(id).value = ""; });
+  document.getElementById("j-grav").value = "Crítico";
+  document.getElementById("j-panel-hd").textContent = "Registar processo";
+  document.getElementById("j-btn-add").textContent = "Registar processo";
+  document.getElementById("j-btn-cancelar").style.display = "none";
+}
+
+function elimProc(id) {
+  if (!confirm("Eliminar este processo?")) return;
+  processos = processos.filter(function(x){ return x.id !== id; });
+  if (_procEditando === id) procCancelarEdicao();
+  fbSync();
+  renderProc();
+}
+
+function formatMesAno(dataStr) {
+  if (!dataStr) return "";
+  var meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  var p = dataStr.split("-");
+  if (p.length < 2) return dataStr;
+  return meses[parseInt(p[1],10)-1] + " " + p[0];
+}
+
+function renderProc() {
+  var div = document.getElementById("lista-proc");
+  if (!div) return;
+  if (!processos.length) { div.innerHTML = '<div style="text-align:center;color:var(--ivory4);padding:20px;font-size:12.5px">Sem processos registados.</div>'; return; }
+  div.innerHTML = processos.map(function(p) {
+    var cls = p.gravidade === "Crítico" ? "crit" : p.gravidade === "Grave" ? "curso" : "";
+    var tag = p.gravidade === "Crítico" ? "tag-crit" : p.gravidade === "Grave" ? "tag-warn" : "tag-ok";
+    var metaParts = [];
+    if (p.dataInicio) metaParts.push(formatMesAno(p.dataInicio));
+    if (p.prazo) metaParts.push("Prazo: " + new Date(p.prazo+"T12:00:00").toLocaleDateString("pt-PT"));
+    if (p.contexto) metaParts.push(p.contexto);
+    var meta = metaParts.join(" · ") + (metaParts.length ? " · " : "") + '<span class="tag ' + tag + '">' + p.gravidade + "</span>";
+    return '<div class="proc ' + cls + '">' +
+      '<div class="proc-title">' + p.titulo + "</div>" +
+      '<div class="proc-meta">' + meta + "</div>" +
+      '<div class="proc-body">' + (p.desc||"—") + "</div>" +
+      '<div class="no-print" style="margin-top:8px;display:flex;gap:6px">' +
+        '<button class="btn btn-ghost btn-sm" onclick="editarProc(' + p.id + ')">Editar</button>' +
+        '<button class="btn btn-crit btn-sm" onclick="elimProc(' + p.id + ')">Eliminar</button>' +
+      '</div>' +
+    '</div>';
+  }).join("");
 }
 
 // ═══ ASSEMBLEIA AO VIVO ════════════════════════════════════════════
@@ -2121,6 +2341,14 @@ function init() {
 // ═══ DADOS CONTA-CORRENTE ════════════════════════════════════════
 var recebimentos = [];
 var obras = [], pendentes = [], memorial = [];
+
+// ═══ PROCESSOS JURÍDICOS ═════════════════════════════════════════
+var processos = [
+  {id:1, titulo:"Sinistro Nov/2025 — Derrube de Colunas por Camião", gravidade:"Crítico", dataInicio:"2025-11-01", prazo:"", contexto:"Dr.ª Patrícia Silva · GNR", desc:"Camião com grua derrubou três colunas. Auto de sinistro GNR lavrado. Seguro não participado pela Flat Condomínios. Ação judicial em preparação. Possível responsabilização da Flat por omissão."},
+  {id:2, titulo:"Flat Condomínios — Auditoria Contabilística 2019-2026", gravidade:"Crítico", dataInicio:"2026-04-01", prazo:"", contexto:"60 287 € em análise · Ata n.º 32", desc:"Obra cobertura: 64 608 € aprovados vs 29 108 € documentados — diferença 35 500 €. Conta CA encerrada unilateralmente. Extratos 2023-2026 não entregues. Pendente: decisão de assembleia."},
+  {id:3, titulo:"Infiltrações — Cobertura (Empresa Fortificado)", gravidade:"Grave", dataInicio:"2018-07-01", prazo:"", contexto:"Obra original Jul 2018", desc:"Infiltrações activas. Auditoria técnica concluída. Aguarda relatório para acção contra empreiteiro."},
+  {id:4, titulo:"Dívidas de Condóminos — 6 996 €", gravidade:"Grave", dataInicio:"2016-01-01", prazo:"", contexto:"23 frações em débito · AT desde 2016", desc:"AT (Vitor Pinto) 1 856 € desde 2016. AC (Antonio Miranda) 1 599 € desde 2020. O (José Pereira) 971 € desde 2018."}
+];
 var cvPontos = [], cvPontoCount = 0;
 var filtroPend = "";
 
@@ -2217,8 +2445,36 @@ function ccRegistarRec() {
     recebimentos.sort(function(a,b){ return a.mes.localeCompare(b.mes); });
   }
   fbSync();
-  ["cc-r-orc","cc-r-elev","cc-r-fcr","cc-r-obras","cc-r-obs"].forEach(function(id){ document.getElementById(id).value=""; });
+  cancelarEdicaoRec();
   lsCarregar();
+  ccRender();
+}
+
+function editarRec(mes) {
+  var r = recebimentos.find(function(x){ return x.mes === mes; });
+  if (!r) return;
+  document.getElementById("cc-mes").value = r.mes;
+  document.getElementById("cc-r-orc").value = r.orc || "";
+  document.getElementById("cc-r-elev").value = r.elev || "";
+  document.getElementById("cc-r-fcr").value = r.fcr || "";
+  document.getElementById("cc-r-obras").value = r.obras || "";
+  document.getElementById("cc-r-obs").value = r.obs || "";
+  document.getElementById("cc-btn-rec").textContent = "Guardar alterações";
+  document.getElementById("cc-btn-rec-cancelar").style.display = "inline-block";
+  document.getElementById("cc-mes").scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function cancelarEdicaoRec() {
+  ["cc-r-orc","cc-r-elev","cc-r-fcr","cc-r-obras","cc-r-obs"].forEach(function(id){ document.getElementById(id).value=""; });
+  document.getElementById("cc-btn-rec").textContent = "Registar recebimento";
+  document.getElementById("cc-btn-rec-cancelar").style.display = "none";
+}
+
+function elimRec(mes) {
+  if (!confirm("Eliminar o recebimento deste mês?")) return;
+  recebimentos = recebimentos.filter(function(r){ return r.mes !== mes; });
+  fbSync();
+  cancelarEdicaoRec();
   ccRender();
 }
 
@@ -2304,7 +2560,11 @@ function ccRender() {
       '<div class="cc-line"><span class="lbl">Quota Orçamental</span><span class="val">'+(r.orc||0).toFixed(2).replace(".",",")+' €</span></div>' +
       '<div class="cc-line"><span class="lbl">Quota Elevador</span><span class="val">'+(r.elev||0).toFixed(2).replace(".",",")+' €</span></div>' +
       '<div class="cc-line"><span class="lbl">FCR</span><span class="val">'+(r.fcr||0).toFixed(2).replace(".",",")+' €</span></div>' +
-      '<div class="cc-line"><span class="lbl">Quota Obras</span><span class="val">'+(r.obras||0).toFixed(2).replace(".",",")+' €</span></div>';
+      '<div class="cc-line"><span class="lbl">Quota Obras</span><span class="val">'+(r.obras||0).toFixed(2).replace(".",",")+' €</span></div>' +
+      '<div class="no-print" style="margin-top:8px;display:flex;gap:6px">' +
+        '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editarRec(\''+r.mes+'\')">Editar</button>' +
+        '<button class="btn btn-crit btn-sm" onclick="event.stopPropagation();elimRec(\''+r.mes+'\')">Eliminar</button>' +
+      '</div>';
     hd.addEventListener("click", function() { body.classList.toggle("open"); });
     wrap.appendChild(hd);
     wrap.appendChild(body);
@@ -2512,12 +2772,13 @@ function imprimirConvocatoria() {
 }
 
 // ═══ LIVRO DE OBRAS ═══════════════════════════════════════════════
+var _obEditando = null;
+
 function registarObra() {
   var t = document.getElementById("ob-data").value;
   var desc = document.getElementById("ob-desc").value.trim();
   if (!t||!desc) { alert("Preencha data e descrição."); return; }
-  obras.push({
-    id:Date.now(),
+  var campos = {
     data:t,
     tipo:document.getElementById("ob-tipo").value,
     zona:document.getElementById("ob-zona").value.trim(),
@@ -2526,10 +2787,51 @@ function registarObra() {
     garantia:document.getElementById("ob-garantia").value,
     desc:desc,
     estado:document.getElementById("ob-estado").value
-  });
+  };
+  if (_obEditando) {
+    var o = obras.find(function(x){ return x.id === _obEditando; });
+    if (o) { o.data=campos.data; o.tipo=campos.tipo; o.zona=campos.zona; o.empresa=campos.empresa; o.valor=campos.valor; o.garantia=campos.garantia; o.desc=campos.desc; o.estado=campos.estado; }
+  } else {
+    campos.id = Date.now();
+    obras.push(campos);
+  }
   obras.sort(function(a,b){ return b.data.localeCompare(a.data); });
   fbSync();
+  obCancelarEdicao();
+  renderObras();
+}
+
+function editarObra(id) {
+  var o = obras.find(function(x){ return x.id === id; });
+  if (!o) return;
+  _obEditando = id;
+  document.getElementById("ob-data").value = o.data || "";
+  document.getElementById("ob-tipo").value = o.tipo || "";
+  document.getElementById("ob-zona").value = o.zona || "";
+  document.getElementById("ob-empresa").value = o.empresa || "";
+  document.getElementById("ob-valor").value = o.valor || "";
+  document.getElementById("ob-garantia").value = o.garantia || "";
+  document.getElementById("ob-desc").value = o.desc || "";
+  document.getElementById("ob-estado").value = o.estado || "concluida";
+  document.getElementById("ob-panel-hd").textContent = "Editar intervenção";
+  document.getElementById("ob-btn-add").textContent = "Guardar alterações";
+  document.getElementById("ob-btn-cancelar").style.display = "inline-block";
+  document.getElementById("ob-data").scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function obCancelarEdicao() {
+  _obEditando = null;
   ["ob-data","ob-zona","ob-empresa","ob-valor","ob-garantia","ob-desc"].forEach(function(id){document.getElementById(id).value="";});
+  document.getElementById("ob-panel-hd").textContent = "Registar intervenção";
+  document.getElementById("ob-btn-add").textContent = "Registar";
+  document.getElementById("ob-btn-cancelar").style.display = "none";
+}
+
+function elimObra(id) {
+  if (!confirm("Eliminar este registo do Livro de Obras?")) return;
+  obras = obras.filter(function(x){ return x.id !== id; });
+  if (_obEditando === id) obCancelarEdicao();
+  fbSync();
   renderObras();
 }
 
@@ -2545,6 +2847,10 @@ function renderObras() {
         (o.empresa?'<span>Empresa: <strong>'+o.empresa+'</strong></span> · ':'') +
         (o.valor?'<span>Valor: <strong>'+o.valor.toFixed(2).replace(".",",")+'€</strong></span> · ':'') +
         (o.garantia?'<span>Garantia até: <strong>'+o.garantia+'</strong></span>':'') +
+      '</div>' +
+      '<div class="no-print" style="margin-top:8px;display:flex;gap:6px">' +
+        '<button class="btn btn-ghost btn-sm" onclick="editarObra(' + o.id + ')">Editar</button>' +
+        '<button class="btn btn-crit btn-sm" onclick="elimObra(' + o.id + ')">Eliminar</button>' +
       '</div>' +
     '</div>';
   }).join("");
@@ -2672,25 +2978,58 @@ var documentos = [
   {id:6, titulo:"Listagem de Condóminos e Permilagens", tipo:"Base de Dados", data:"2026-09-07", url:"", obs:"44 frações · 100,000‰ auditado"},
 ];
 
+var _docEditando = null;
+
 function addDoc() {
   var t = document.getElementById("doc-titulo").value.trim();
   if (!t) { alert("Indique o título do documento."); return; }
-  documentos.push({
-    id: Date.now(),
+  var campos = {
     titulo: t,
     tipo: document.getElementById("doc-tipo").value,
     data: document.getElementById("doc-data").value,
     url: document.getElementById("doc-url").value.trim(),
     obs: document.getElementById("doc-obs").value.trim()
-  });
-  ["doc-titulo","doc-data","doc-url","doc-obs"].forEach(function(id){ document.getElementById(id).value=""; });
+  };
+  if (_docEditando) {
+    var d = documentos.find(function(x){ return x.id === _docEditando; });
+    if (d) { d.titulo=campos.titulo; d.tipo=campos.tipo; d.data=campos.data; d.url=campos.url; d.obs=campos.obs; }
+  } else {
+    campos.id = Date.now();
+    documentos.push(campos);
+  }
+  docCancelarEdicao();
   fbSync();
   renderDocs();
+}
+
+function editarDoc(id) {
+  var d = documentos.find(function(x){ return x.id === id; });
+  if (!d) return;
+  _docEditando = id;
+  document.getElementById("doc-titulo").value = d.titulo || "";
+  document.getElementById("doc-tipo").value = d.tipo || "Outro";
+  document.getElementById("doc-data").value = d.data || "";
+  document.getElementById("doc-url").value = d.url || "";
+  document.getElementById("doc-obs").value = d.obs || "";
+  document.getElementById("doc-panel-hd").textContent = "Editar documento";
+  document.getElementById("doc-btn-add").textContent = "Guardar alterações";
+  document.getElementById("doc-btn-cancelar").style.display = "inline-block";
+  document.getElementById("doc-titulo").scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function docCancelarEdicao() {
+  _docEditando = null;
+  ["doc-titulo","doc-data","doc-url","doc-obs"].forEach(function(id){ document.getElementById(id).value=""; });
+  document.getElementById("doc-tipo").value = "Ata";
+  document.getElementById("doc-panel-hd").textContent = "Adicionar documento";
+  document.getElementById("doc-btn-add").textContent = "Adicionar à biblioteca";
+  document.getElementById("doc-btn-cancelar").style.display = "none";
 }
 
 function elimDoc(id) {
   if (!confirm("Eliminar este documento da biblioteca?")) return;
   documentos = documentos.filter(function(d){ return d.id !== id; });
+  if (_docEditando === id) docCancelarEdicao();
   fbSync();
   renderDocs();
 }
@@ -2712,7 +3051,7 @@ function renderDocs() {
       "<td style='white-space:nowrap'>" + df + "</td>" +
       "<td style='font-size:12px;color:var(--ivory4)'>" + (d.obs||"—") + "</td>" +
       "<td>" + link + "</td>" +
-      "<td class='no-print'><button class='btn btn-crit btn-sm' onclick='elimDoc(" + d.id + ")'>Eliminar</button></td>" +
+      "<td class='no-print' style='white-space:nowrap'><button class='btn btn-ghost btn-sm' onclick='editarDoc(" + d.id + ")'>Editar</button> <button class='btn btn-crit btn-sm' onclick='elimDoc(" + d.id + ")'>Eliminar</button></td>" +
       "</tr>";
   }).join("") || '<tr><td colspan="6" style="text-align:center;color:var(--ivory4);padding:20px">Sem documentos na biblioteca.</td></tr>';
 }
