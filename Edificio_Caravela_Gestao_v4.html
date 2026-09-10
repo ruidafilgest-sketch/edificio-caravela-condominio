@@ -1921,6 +1921,32 @@ function formatMesAno(dataStr) {
   return meses[parseInt(p[1],10)-1] + " " + p[0];
 }
 
+function adicionarAnexoProc(procId) {
+  var p = processos.find(function(x){ return x.id === procId; });
+  if (!p) return;
+  if (!p.anexos) p.anexos = [];
+  var titEl = document.getElementById("anexo-tit-" + procId);
+  var t = titEl.value.trim();
+  if (!t) { alert("Indique o título do documento."); return; }
+  p.anexos.push({
+    id: Date.now(),
+    titulo: t,
+    url: document.getElementById("anexo-url-" + procId).value.trim(),
+    data: document.getElementById("anexo-data-" + procId).value
+  });
+  fbSync();
+  renderProc();
+}
+
+function eliminarAnexoProc(procId, anexoId) {
+  if (!confirm("Eliminar este documento anexado?")) return;
+  var p = processos.find(function(x){ return x.id === procId; });
+  if (!p) return;
+  p.anexos = (p.anexos||[]).filter(function(a){ return a.id !== anexoId; });
+  fbSync();
+  renderProc();
+}
+
 function renderProc() {
   var div = document.getElementById("lista-proc");
   if (!div) return;
@@ -1933,10 +1959,32 @@ function renderProc() {
     if (p.prazo) metaParts.push("Prazo: " + new Date(p.prazo+"T12:00:00").toLocaleDateString("pt-PT"));
     if (p.contexto) metaParts.push(p.contexto);
     var meta = metaParts.join(" · ") + (metaParts.length ? " · " : "") + '<span class="tag ' + tag + '">' + p.gravidade + "</span>";
+    var anexos = p.anexos || [];
+    var anexosLista = anexos.length ? anexos.map(function(a) {
+      var df = a.data ? new Date(a.data+"T12:00:00").toLocaleDateString("pt-PT") : "";
+      var label = a.url
+        ? '<a href="' + a.url + '" target="_blank" style="color:var(--gold)">' + a.titulo + "</a>"
+        : a.titulo;
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 0;font-size:12px;border-top:1px solid var(--rule)">' +
+        "<span>" + label + (df ? ' <span style="color:var(--ivory4)">· ' + df + "</span>" : "") + "</span>" +
+        '<button class="btn btn-crit btn-sm no-print" onclick="eliminarAnexoProc(' + p.id + "," + a.id + ')">Eliminar</button>' +
+      "</div>";
+    }).join("") : '<div style="color:var(--ivory4);font-size:12px;padding:4px 0">Sem documentos anexados.</div>';
+    var anexosBloco = '<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--rule2)">' +
+      '<div style="font-size:11.5px;color:var(--ivory4);margin-bottom:4px">Documentos de suporte (' + anexos.length + ")</div>" +
+      anexosLista +
+      '<div class="no-print" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">' +
+        '<div class="fg" style="flex:2;min-width:160px;margin-bottom:0"><input type="text" id="anexo-tit-' + p.id + '" placeholder="Título (ex: Carta da advogada 12/09)"></div>' +
+        '<div class="fg" style="flex:2;min-width:140px;margin-bottom:0"><input type="url" id="anexo-url-' + p.id + '" placeholder="Link (opcional)"></div>' +
+        '<div class="fg" style="flex:1;min-width:120px;margin-bottom:0"><input type="date" id="anexo-data-' + p.id + '"></div>' +
+        '<button class="btn btn-ghost btn-sm" onclick="adicionarAnexoProc(' + p.id + ')">+ Adicionar</button>' +
+      "</div>" +
+    "</div>";
     return '<div class="proc ' + cls + '">' +
       '<div class="proc-title">' + p.titulo + "</div>" +
       '<div class="proc-meta">' + meta + "</div>" +
       '<div class="proc-body">' + (p.desc||"—") + "</div>" +
+      anexosBloco +
       '<div class="no-print" style="margin-top:8px;display:flex;gap:6px">' +
         '<button class="btn btn-ghost btn-sm" onclick="editarProc(' + p.id + ')">Editar</button>' +
         '<button class="btn btn-crit btn-sm" onclick="elimProc(' + p.id + ')">Eliminar</button>' +
@@ -2344,10 +2392,10 @@ var obras = [], pendentes = [], memorial = [];
 
 // ═══ PROCESSOS JURÍDICOS ═════════════════════════════════════════
 var processos = [
-  {id:1, titulo:"Sinistro Nov/2025 — Derrube de Colunas por Camião", gravidade:"Crítico", dataInicio:"2025-11-01", prazo:"", contexto:"Dr.ª Patrícia Silva · GNR", desc:"Camião com grua derrubou três colunas. Auto de sinistro GNR lavrado. Seguro não participado pela Flat Condomínios. Ação judicial em preparação. Possível responsabilização da Flat por omissão."},
-  {id:2, titulo:"Flat Condomínios — Auditoria Contabilística 2019-2026", gravidade:"Crítico", dataInicio:"2026-04-01", prazo:"", contexto:"60 287 € em análise · Ata n.º 32", desc:"Obra cobertura: 64 608 € aprovados vs 29 108 € documentados — diferença 35 500 €. Conta CA encerrada unilateralmente. Extratos 2023-2026 não entregues. Pendente: decisão de assembleia."},
-  {id:3, titulo:"Infiltrações — Cobertura (Empresa Fortificado)", gravidade:"Grave", dataInicio:"2018-07-01", prazo:"", contexto:"Obra original Jul 2018", desc:"Infiltrações activas. Auditoria técnica concluída. Aguarda relatório para acção contra empreiteiro."},
-  {id:4, titulo:"Dívidas de Condóminos — 6 996 €", gravidade:"Grave", dataInicio:"2016-01-01", prazo:"", contexto:"23 frações em débito · AT desde 2016", desc:"AT (Vitor Pinto) 1 856 € desde 2016. AC (Antonio Miranda) 1 599 € desde 2020. O (José Pereira) 971 € desde 2018."}
+  {id:1, titulo:"Sinistro Nov/2025 — Derrube de Colunas por Camião", gravidade:"Crítico", dataInicio:"2025-11-01", prazo:"", contexto:"Dr.ª Patrícia Silva · GNR", desc:"Camião com grua derrubou três colunas. Auto de sinistro GNR lavrado. Seguro não participado pela Flat Condomínios. Ação judicial em preparação. Possível responsabilização da Flat por omissão.", anexos:[]},
+  {id:2, titulo:"Flat Condomínios — Auditoria Contabilística 2019-2026", gravidade:"Crítico", dataInicio:"2026-04-01", prazo:"", contexto:"60 287 € em análise · Ata n.º 32", desc:"Obra cobertura: 64 608 € aprovados vs 29 108 € documentados — diferença 35 500 €. Conta CA encerrada unilateralmente. Extratos 2023-2026 não entregues. Pendente: decisão de assembleia.", anexos:[]},
+  {id:3, titulo:"Infiltrações — Cobertura (Empresa Fortificado)", gravidade:"Grave", dataInicio:"2018-07-01", prazo:"", contexto:"Obra original Jul 2018", desc:"Infiltrações activas. Auditoria técnica concluída. Aguarda relatório para acção contra empreiteiro.", anexos:[]},
+  {id:4, titulo:"Dívidas de Condóminos — 6 996 €", gravidade:"Grave", dataInicio:"2016-01-01", prazo:"", contexto:"23 frações em débito · AT desde 2016", desc:"AT (Vitor Pinto) 1 856 € desde 2016. AC (Antonio Miranda) 1 599 € desde 2020. O (José Pereira) 971 € desde 2018.", anexos:[]}
 ];
 var cvPontos = [], cvPontoCount = 0;
 var filtroPend = "";
