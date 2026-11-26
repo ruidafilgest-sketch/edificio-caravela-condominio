@@ -1299,7 +1299,7 @@ body.ro::before{content:"MODO SÓ LEITURA — as alterações não são guardada
             <button class="btn btn-gold" onclick="secExportar()">Descarregar cópia completa (.json)</button>
             <button class="btn btn-ghost" onclick="secExportarCSV()">Lista de condóminos (.csv)</button>
           </div>
-          <div style="margin-top:14px"><label style="font-size:11px;color:var(--ivory4)">Importar cópia / dados privados (só preenche o que estiver vazio)</label><br>
+          <div style="margin-top:14px"><label style="font-size:11px;color:var(--ivory4)">Importar cópia / dados privados (acrescenta o que falta, sem duplicar)</label><br>
             <input type="file" accept=".json,application/json" onchange="secImportar(this,'mesclar')"></div>
           <div style="margin-top:10px"><label style="font-size:11px;color:var(--ivory4)">Restaurar cópia (SUBSTITUI tudo)</label><br>
             <input type="file" accept=".json,application/json" onchange="secImportar(this,'substituir')"></div>
@@ -1310,7 +1310,7 @@ body.ro::before{content:"MODO SÓ LEITURA — as alterações não são guardada
       <div class="panel">
         <div class="panel-hd"><h2>Migrar da base antiga</h2></div>
         <div class="panel-bd">
-          <p class="sec-nota" style="margin-top:0">Traz para esta base protegida os dados que estavam no projeto antigo (nó «caravela»). Só preenche o que estiver vazio.</p>
+          <p class="sec-nota" style="margin-top:0">Traz para esta base protegida os dados que estavam no projeto antigo (nó «caravela»). Acrescenta o que falta, sem apagar nem duplicar.</p>
           <button class="btn btn-ghost" onclick="secMigrar()">Migrar agora</button>
           <div id="sec-mig-st" style="margin-top:8px;font-size:12px"></div>
         </div>
@@ -4229,6 +4229,21 @@ function secAplicarPacote(p, modo) {
       D.forEach(function(c) { var o = by[c.f]; if (o) ["nome","nif","email","tel","morada","cp"].forEach(function(f) { if (o[f] != null && o[f] !== "") c[f] = o[f]; }); });
       n += v.length;
     } else if (modo === "substituir" || !secGet(k).length) { secPut(k, v); n += v.length; }
+    else {
+      // fundir: acrescenta o que falta (por id) e completa campos vazios (ex.: ligação do documento)
+      var cur = secGet(k).slice(), mudou = false;
+      v.forEach(function(x) {
+        if (x == null || typeof x !== "object") return;
+        var ex = null;
+        if (x.id != null) cur.forEach(function(y) { if (y && y.id === x.id) ex = y; });
+        else { var sg = JSON.stringify(x); cur.forEach(function(y) { if (JSON.stringify(y) === sg) ex = y; }); }
+        if (!ex) { cur.push(x); mudou = true; n++; return; }
+        Object.keys(x).forEach(function(f) {
+          if ((ex[f] == null || ex[f] === "") && x[f] != null && x[f] !== "") { ex[f] = x[f]; mudou = true; }
+        });
+      });
+      if (mudou) secPut(k, cur);
+    }
   });
   var tk = (p && p.tokens) || null;
   if (tk && typeof tk === "object") { SEC.tok = tk; try { localStorage.setItem("caravela_tokens", JSON.stringify(tk)); } catch (e) {} if (!SEC.ro && _db) _db.ref(FB + "/config/tokens").set(tk); }
@@ -4244,7 +4259,7 @@ window.secImportar = function(inp, modo) {
     try {
       var p = JSON.parse(r.result);
       if (!p || (!p.dados && !p.condominos && !p.tokens)) throw new Error("ficheiro não reconhecido");
-      var msg = modo === "substituir" ? "Substituir TODOS os dados atuais pelos do ficheiro?" : "Importar os dados do ficheiro (só preenche o que estiver vazio e as fichas dos condóminos)?";
+      var msg = modo === "substituir" ? "Substituir TODOS os dados atuais pelos do ficheiro?" : "Importar os dados do ficheiro (acrescenta o que falta, sem apagar nem duplicar o que já existe)?";
       if (!confirm(msg)) { inp.value = ""; return; }
       var n = secAplicarPacote(p.dados || p.condominos ? p : { dados: p }, modo);
       secToast("Importação concluída (" + n + " registos).", "ok");
@@ -4276,7 +4291,7 @@ window.secMigrar = function() {
         dados[k] = (v || []).filter(function(x) { return x != null; });
       });
       var res = SEC_COLS.map(function(k) { return k + ": " + dados[k].length; }).join(" · ");
-      if (!confirm("Encontrei na base antiga: " + res + ". Importar para a base nova (só preenche o que estiver vazio)?")) { st.textContent = "Cancelado."; return; }
+      if (!confirm("Encontrei na base antiga: " + res + ". Importar para a base nova (acrescenta o que falta, sem apagar nem duplicar)?")) { st.textContent = "Cancelado."; return; }
       var ag = d.ag_20261127 || null;
       secAplicarPacote({ dados: dados, ag: ag }, "mesclar");
       st.textContent = "Migração feita: " + res + ". Confirma os dados e, depois, apaga o nó «caravela» da base antiga (guia).";
