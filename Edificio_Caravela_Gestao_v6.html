@@ -4149,7 +4149,11 @@ fbSet = function(k, v) {
     };
     var base = SEC.rev[k] || 0;
     _db.ref(FB + "/_rev/" + k).transaction(function(cur) {
-      cur = cur || 0; if (cur !== base) return; return cur + 1;
+      // 1.ª chamada do Firebase vem com a cache local (null se ainda não leu): devolve uma estimativa
+      // para o servidor confirmar; só aborta quando conhece mesmo o valor do servidor e é diferente.
+      if (cur === null || cur === undefined) return base + 1;
+      if (cur !== base) return;
+      return cur + 1;
     }, function(err, ok, snap) {
       if (err) { fbDot("off", "erro"); secToast("Erro ao guardar «" + k + "»: " + err.message, "err"); SEC.pend = {}; fim(); return; }
       if (!ok) { SEC.pend = {}; secConflito(k); SEC.busy[k] = false; return; }
